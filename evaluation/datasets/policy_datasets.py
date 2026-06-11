@@ -1,7 +1,8 @@
 """
 Dataset implementations for policy evaluation.
 
-This module provides implementations for DynaBench and PolyGuard datasets.
+This module provides implementations for the policy guardrail evaluation
+datasets: DynaBench, GuardSet-X, PolicyGuardBench, HarmBench, and WildGuard.
 """
 
 import csv
@@ -14,7 +15,6 @@ from typing import Dict, Any, Optional, List, Iterator, Tuple
 from .base import BaseDataset, DatasetSample, DatasetInfo, register_dataset
 from .policy_books import (
     HARMBENCH_POLICY_BOOK,
-    SAFERLHF_POLICY_BOOK,
     WILDGUARD_POLICY_BOOK,
 )
 from .policy_books.wildguard import SUBCATEGORY_ALIASES as WILDGUARD_ALIASES
@@ -210,80 +210,6 @@ class DynaBenchDataset(BaseDataset):
                 metadata={
                     "label": label,
                     **metadata
-                },
-            )
-    
-    def __len__(self) -> int:
-        return len(self._data)
-
-
-@register_dataset
-class PolyGuardDataset(BaseDataset):
-    """
-    PolyGuard dataset for multi-policy guardrail evaluation.
-    
-    Each record contains:
-    - prompt: The input prompt
-    - response: Optional model response
-    - policy: List of policies
-    - safe: Whether the content is safe
-    - rule: The violated rule (if unsafe)
-    
-    Returns:
-        - content: The prompt text (content to evaluate)
-        - response: Optional model response (separate)
-        - policies: List of policies (shuffled)
-    """
-    
-    @classmethod
-    def get_info(cls) -> DatasetInfo:
-        return DatasetInfo(
-            name="polyguard",
-            description="PolyGuard dataset for multi-policy guardrail evaluation",
-            dataset_type="multi_policy",
-            file_format="jsonl",
-        )
-    
-    def load(self) -> None:
-        self._data = []
-        with open(self.dataset_path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                self._data.append(json.loads(line))
-    
-    def __iter__(self) -> Iterator[DatasetSample]:
-        import random
-        
-        seed = self.config.get("seed", 42)
-        random.seed(seed)
-        
-        for idx, item in enumerate(self._data):
-            prompt = item.get("prompt") or item.get("instance") or ""
-            response = item.get("response")
-            
-            policies = item.get("policy") or []
-            safe = bool(item.get("safe", True))
-            rule = item.get("rule")
-            
-            shuffled_policies = list(policies)
-            random.shuffle(shuffled_policies)
-            
-            gt_policy_index = None
-            if not safe and rule is not None and rule in shuffled_policies:
-                gt_policy_index = shuffled_policies.index(rule)
-            
-            yield DatasetSample(
-                sample_id=str(idx),
-                content=prompt,
-                safe=safe,
-                policies=shuffled_policies,
-                response=response,
-                violated_policy_index=gt_policy_index,
-                metadata={
-                    "original_policies": policies,
-                    "rule": rule,
                 },
             )
     
@@ -532,80 +458,6 @@ class HarmBenchDataset(BaseDataset):
             1 for r in self._data
             if (r.get("Behavior") or r.get("behavior") or "").strip()
         )
-
-
-@register_dataset
-class SafeRLHFDataset(BaseDataset):
-    """PKU-SafeRLHF evaluation dataset (PKU-Alignment/PKU-SafeRLHF, test split).
-
-    Each row carries two responses with per-response safety flags
-    (`is_response_0_safe`, `is_response_1_safe`) and harm-category dicts
-    keyed S1..S19. We emit one DatasetSample per (row, response) pair, so
-    a 8.21k-row test split yields ~16.4k samples.
-
-    Each sample's policy list is sampled from the SafeRLHF 19-category book
-    with any True harm categories always included.
-
-    `dataset_path` may be a local jsonl/parquet file or an HF dataset id
-    (e.g. `PKU-Alignment/PKU-SafeRLHF`). Default split: `test`.
-    """
-
-    @classmethod
-    def get_info(cls) -> DatasetInfo:
-        return DatasetInfo(
-            name="saferlhf",
-            description="PKU-SafeRLHF test split (per-response safety classification)",
-            dataset_type="multi_policy",
-            file_format="parquet",
-        )
-
-    def load(self) -> None:
-        self._data = _load_records(
-            self.dataset_path,
-            hf_split=self.config.get("hf_split", "test"),
-        )
-
-    def _iter_response_samples(self) -> Iterator[Tuple[int, str, str, bool, List[str]]]:
-        """Yield (row_idx, suffix, content, is_safe, violated_tax_ids)."""
-        for row_idx, item in enumerate(self._data):
-            prompt = (item.get("prompt") or "").strip()
-            for suffix in ("0", "1"):
-                response = (item.get(f"response_{suffix}") or "").strip()
-                if not response:
-                    continue
-                is_safe = bool(item.get(f"is_response_{suffix}_safe", True))
-                cat_dict = item.get(f"response_{suffix}_harm_category") or {}
-                violated = [k for k, v in cat_dict.items() if v and k in SAFERLHF_POLICY_BOOK]
-                content = (
-                    f"User: {prompt}\n\nAssistant: {response}" if prompt else response
-                )
-                yield row_idx, suffix, content, is_safe, violated
-
-    def __iter__(self) -> Iterator[DatasetSample]:
-        seed = self.config.get("seed", 42)
-        for sample_idx, (row_idx, suffix, content, is_safe, violated) in enumerate(
-            self._iter_response_samples()
-        ):
-            rng = random.Random(seed + sample_idx)
-            policies = _sample_policy_subset(
-                SAFERLHF_POLICY_BOOK,
-                [] if is_safe else violated,
-                rng,
-            )
-            yield DatasetSample(
-                sample_id=f"{row_idx}_r{suffix}",
-                content=content,
-                safe=is_safe,
-                policies=policies,
-                metadata={
-                    "row_idx": row_idx,
-                    "response_id": suffix,
-                    "harm_categories": violated,
-                },
-            )
-
-    def __len__(self) -> int:
-        return sum(1 for _ in self._iter_response_samples())
 
 
 @register_dataset

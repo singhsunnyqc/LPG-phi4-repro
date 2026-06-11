@@ -4,7 +4,8 @@ Datasets module for Policy Evaluate framework.
 This module provides the dataset plugin system including:
 - BaseDataset: Abstract base class for all datasets
 - DatasetRegistry: Registry for discovering and loading datasets
-- Dataset implementations: DynaBench, PolyGuard, Guardset-X
+- Dataset implementations: DynaBench, Guardset-X, PolicyGuardBench,
+  HarmBench, WildGuard
 """
 
 from .base import (
@@ -17,11 +18,9 @@ from .base import (
 
 from .policy_datasets import (
     DynaBenchDataset,
-    PolyGuardDataset,
     GuardsetXDataset,
     PolicyGuardBenchDataset,
     HarmBenchDataset,
-    SafeRLHFDataset,
     WildGuardDataset,
     parse_policy_to_rules,
 )
@@ -33,11 +32,9 @@ __all__ = [
     "DatasetRegistry",
     "register_dataset",
     "DynaBenchDataset",
-    "PolyGuardDataset",
     "GuardsetXDataset",
     "PolicyGuardBenchDataset",
     "HarmBenchDataset",
-    "SafeRLHFDataset",
     "WildGuardDataset",
     "parse_policy_to_rules",
 ]

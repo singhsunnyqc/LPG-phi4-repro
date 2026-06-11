@@ -1,4 +1,4 @@
-"""Policy books for evaluation-only datasets (HarmBench, SafeRLHF, WildGuard).
+"""Policy books for evaluation-only datasets (HarmBench, WildGuard).
 
 Each module exposes:
 - POLICY_BOOK: dict[tax_id -> imperative one-sentence rule] used to build
@@ -11,11 +11,9 @@ train and eval distributions stay aligned.
 """
 
 from .harmbench import POLICY_BOOK as HARMBENCH_POLICY_BOOK
-from .saferlhf import POLICY_BOOK as SAFERLHF_POLICY_BOOK
 from .wildguard import POLICY_BOOK as WILDGUARD_POLICY_BOOK
 
 __all__ = [
     "HARMBENCH_POLICY_BOOK",
-    "SAFERLHF_POLICY_BOOK",
     "WILDGUARD_POLICY_BOOK",
 ]

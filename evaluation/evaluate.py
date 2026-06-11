@@ -306,8 +306,8 @@ def main():
         "--dataset",
         type=str,
         required=True,
-        help="Dataset type to use (e.g., dynabench, polyguard, guardset_x, "
-        "policyguardbench, harmbench, saferlhf, wildguard)",
+        help="Dataset type to use (e.g., dynabench, guardset_x, "
+        "policyguardbench, harmbench, wildguard)",
     )
     parser.add_argument(
         "--dataset_path",

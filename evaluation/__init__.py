@@ -6,7 +6,7 @@ A modular framework for evaluating policy guardrail models on various datasets.
 This framework provides:
 - Plugin architecture for models and datasets
 - Support for Qwen models (HuggingFace and VLLM)
-- Support for DynaBench, PolyGuard, and Guardset-X datasets
+- Support for DynaBench, Guardset-X, PolicyGuardBench, HarmBench, and WildGuard datasets
 - Comprehensive evaluation metrics
 - Batch evaluation support
 
@@ -42,7 +42,6 @@ from datasets import (
     DatasetRegistry,
     register_dataset,
     DynaBenchDataset,
-    PolyGuardDataset,
     GuardsetXDataset,
     PolicyGuardBenchDataset,
 )
@@ -74,7 +73,6 @@ __all__ = [
     "DatasetRegistry",
     "register_dataset",
     "DynaBenchDataset",
-    "PolyGuardDataset",
     "GuardsetXDataset",
     "PolicyGuardBenchDataset",
     "SafetyMetrics",

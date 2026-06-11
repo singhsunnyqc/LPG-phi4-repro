@@ -8,7 +8,7 @@
 #
 # Required env vars:
 #   MODEL          one of: latent_policy_guard | dynaguard_hf | qwen_hf | qwen_vllm
-#   DATASET        one of: wildguard | policyguardbench | harmbench | saferlhf | polyguard
+#   DATASET        one of: dynabench | guardset_x | wildguard | policyguardbench | harmbench
 #   DATASET_PATH   local file OR HF dataset id (e.g. allenai/wildguardmix)
 #
 # Required for latent_policy_guard:
