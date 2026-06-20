@@ -417,7 +417,7 @@ def main():
     parser.add_argument(
         "--prj_dim",
         type=int,
-        default=2560,
+        default=3072,
         help="Projection hidden dim (for latent_policy_guard model)",
     )
     parser.add_argument(

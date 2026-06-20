@@ -66,7 +66,7 @@ torchrun --nproc_per_node="$NUM_GPUS" --master_port="$MASTER_PORT" train.py \
     --stage_names "intent,risk" \
     --logging_strategy steps \
     --use_prj True \
-    --prj_dim 2560 \
+    --prj_dim 3072 \
     --prj_dropout 0.0 \
     --distill_loss_div_std True \
     --stage_align_loss_factor 1.0 \

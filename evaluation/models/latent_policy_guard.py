@@ -62,7 +62,7 @@ def _build_lora_config(model_name: str, model_args: ModelArguments) -> LoraConfi
             "up_proj", "down_proj", "gate_proj",
         ]
     elif "phi" in model_name_lower:
-        target_modules = ["q_proj", "k_proj", "v_proj", "dense", "fc1", "fc2"]
+        target_modules = ["qkv_proj", "o_proj", "gate_up_proj", "down_proj"]
     elif "gpt2" in model_name_lower:
         target_modules = ["c_attn", "c_proj", "c_fc"]
     else:
@@ -242,7 +242,7 @@ class LatentPolicyGuardModel(BaseModel):
             # we'll attach the adapter ourselves afterwards.
             use_lora=not use_adapter,
             use_prj=_parse_bool(self.config.get("use_prj", True)),
-            prj_dim=int(self.config.get("prj_dim", 2560)),
+            prj_dim=int(self.config.get("prj_dim", 3072)),
             prj_dropout=float(self.config.get("prj_dropout", 0.0)),
             prj_no_ln=False,
             greedy=_parse_bool(self.config.get("greedy", True)),

@@ -64,7 +64,7 @@ def build_lora_config(model_name: str, model_args: ModelArguments) -> LoraConfig
             "gate_proj",
         ]
     elif "phi" in model_name_lower:
-        target_modules = ["q_proj", "k_proj", "v_proj", "dense", "fc1", "fc2"]
+        target_modules = ["qkv_proj", "o_proj", "gate_up_proj", "down_proj"]
     elif any(name in model_name_lower for name in ["gpt2", "gsm-cot"]):
         target_modules = ["c_attn", "c_proj", "c_fc"]
     else:

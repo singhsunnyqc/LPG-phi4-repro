@@ -73,7 +73,7 @@ case "$MODEL" in
             --lora_r "${LORA_R:-128}"
             --lora_alpha "${LORA_ALPHA:-32}"
             --use_prj "${USE_PRJ:-True}"
-            --prj_dim "${PRJ_DIM:-2560}"
+            --prj_dim "${PRJ_DIM:-3072}"
             --greedy "${GREEDY:-True}"
             --remove_eos "${REMOVE_EOS:-True}"
             --model_max_length "${MODEL_MAX_LENGTH:-1024}"

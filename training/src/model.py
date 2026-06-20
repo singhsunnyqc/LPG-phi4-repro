@@ -112,7 +112,7 @@ class TrainingArguments(transformers.TrainingArguments):
     exp_mode: bool = field(default=False, metadata={"help": "Use partial data for debugging."})
     exp_data_num: int = field(default=10000)
     use_prj: bool = field(default=True, metadata={"help": "Use a projection module."})
-    prj_dim: int = field(default=2560, metadata={"help": "Projection hidden dim."})
+    prj_dim: int = field(default=3072, metadata={"help": "Projection hidden dim."})
     prj_dropout: float = field(default=0.0)
     prj_no_ln: bool = field(default=False, metadata={"help": "Remove LayerNorm from projection."})
     distill_loss_div_std: bool = field(default=False)
