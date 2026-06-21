@@ -1,13 +1,15 @@
 # Latent Policy Guard — core dependencies.
 #
-# These are minimum tested versions, not strict upper bounds. Newer
-# point releases of transformers / peft / datasets generally work.
+# Upper bounds matter: transformers v5 removed flags this repo relies on
+# (--save_safetensors, warmup_ratio, logging_dir), so transformers is capped
+# below 5.0. accelerate must be >=1.0 to match transformers 4.5x
+# (Accelerator.unwrap_model needs the keep_torch_compile argument).
 
 torch>=2.3
-transformers>=4.45
-peft>=0.11
-datasets>=3.0
-accelerate>=0.30
+transformers>=4.45,<5.0
+peft>=0.11,<0.14
+datasets>=3.0,<4.0
+accelerate>=1.0,<2.0
 deepspeed>=0.14
 safetensors>=0.4
 sentencepiece>=0.2
