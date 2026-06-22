@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import re
+import time
 from typing import Dict, List, Sequence
 
 import torch
@@ -15,7 +16,7 @@ import transformers
 from peft import LoraConfig, TaskType
 from torch.utils.data import Dataset
 from tqdm import tqdm
-from transformers import Trainer
+from transformers import Trainer, TrainerCallback
 
 from src.model import (
     IGNORE_INDEX,
@@ -222,6 +223,74 @@ def _load_teacher_summaries(
             raw_text = explicit_stages.get(stage_name, "")
         result.append(normalize_tagged_summary(raw_text, stage_name))
     return result
+
+
+class PerStepJSONLCallback(TrainerCallback):
+    """Write one structured line per optimizer step to {output_dir}/per_step_log.jsonl.
+
+    The CustomTrainer emits the five component losses via self.log() in compute_loss,
+    while HF's Trainer emits a separate row carrying grad_norm/learning_rate/epoch for
+    the same step. on_log caches the component losses, then flushes a merged line once
+    it sees the grad_norm/learning_rate row — emitting at most one line per step.
+    """
+
+    _LOSS_KEYS = (
+        "ce_loss",
+        "distill_loss",
+        "ref_ce_loss",
+        "stage_align_loss",
+        "explain_loss",
+    )
+
+    def __init__(self):
+        self._cached_losses = {}
+        self._last_logged_step = -1
+        self._last_wall = None
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        try:
+            if logs is None:
+                return
+            # Cache any component losses we see for the current step.
+            for key in self._LOSS_KEYS:
+                if key in logs:
+                    self._cached_losses[key] = _to_scalar(logs[key])
+
+            # The grad_norm / learning_rate row is the trigger to flush a merged line.
+            if "grad_norm" not in logs and "learning_rate" not in logs:
+                return
+
+            step = state.global_step
+            # Emit only once per optimizer step.
+            if step == self._last_logged_step:
+                return
+
+            now = time.time()
+            secs_since_last = None if self._last_wall is None else now - self._last_wall
+
+            record = {
+                "step": step,
+                "epoch": logs.get("epoch", state.epoch),
+                "ce_loss": self._cached_losses.get("ce_loss"),
+                "distill_loss": self._cached_losses.get("distill_loss"),
+                "ref_ce_loss": self._cached_losses.get("ref_ce_loss"),
+                "stage_align_loss": self._cached_losses.get("stage_align_loss"),
+                "explain_loss": self._cached_losses.get("explain_loss"),
+                "lr": logs.get("learning_rate"),
+                "grad_norm": _to_scalar(logs.get("grad_norm")),
+                "timestamp": now,
+                "secs_since_last": secs_since_last,
+            }
+
+            log_path = os.path.join(args.output_dir, "per_step_log.jsonl")
+            with open(log_path, "a") as f:
+                f.write(json.dumps(record) + "\n")
+
+            self._last_logged_step = step
+            self._last_wall = now
+            self._cached_losses = {}
+        except Exception as e:  # never let logging crash training
+            logging.warning(f"PerStepJSONLCallback.on_log failed: {e}")
 
 
 class CustomTrainer(Trainer):
@@ -545,6 +614,7 @@ def train():
         args=training_args,
         **data_module,
     )
+    trainer.add_callback(PerStepJSONLCallback())
     resume_ckpt = training_args.resume_from_checkpoint
     
     # Check if we need to load only model weights (not optimizer states)

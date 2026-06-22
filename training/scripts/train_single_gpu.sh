@@ -26,6 +26,8 @@ GRAD_ACCUM=${GRAD_ACCUM:-8}
 MAX_TOKENS=${MAX_TOKENS:-800}
 SAVE_STRATEGY=${SAVE_STRATEGY:-no}
 LOG_STEPS=${LOG_STEPS:-1}
+SAVE_STEPS=${SAVE_STEPS:-120}
+SAVE_TOTAL_LIMIT=${SAVE_TOTAL_LIMIT:-1}
 
 mkdir -p "$SAVE_DIR"
 
@@ -49,6 +51,8 @@ python train.py \
     --use_lora True \
     --lora_r 128 --lora_alpha 32 --lora_init \
     --save_strategy "$SAVE_STRATEGY" \
+    --save_steps "${SAVE_STEPS:-120}" \
+    --save_total_limit "${SAVE_TOTAL_LIMIT:-1}" \
     --save_safetensors False \
     --weight_decay 0.1 \
     --warmup_ratio 0.10 \
